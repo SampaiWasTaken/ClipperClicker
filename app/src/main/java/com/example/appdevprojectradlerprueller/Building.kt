@@ -1,7 +1,9 @@
 package com.example.appdevprojectradlerprueller
 
+import java.math.BigInteger
 
-class Building constructor(buildingID: Int, image: Int, name: String, desc: String, cost: Int, cps: Int, amount: Int) {
+
+class Building constructor(buildingID: Int, image: Int, name: String, desc: String, cost: String, cps: Int, amount: Int) {
     var buildingID = buildingID
     var image = image
     var name = name

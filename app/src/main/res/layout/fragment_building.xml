@@ -10,7 +10,13 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="110dp">
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="buildingFrame,buildingIcon" />
 
         <ImageView
             android:id="@+id/buildingFrame"
@@ -23,68 +29,78 @@
             app:srcCompat="@drawable/frame"
             tools:src="@drawable/frame" />
 
+
+        <ImageView
+            android:id="@+id/buildingIcon"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:src="@drawable/ic_launcher_foreground"
+            app:layout_constraintBottom_toBottomOf="@+id/buildingFrame"
+            app:layout_constraintEnd_toEndOf="@+id/buildingFrame"
+            app:layout_constraintStart_toStartOf="@+id/buildingFrame"
+            app:layout_constraintTop_toTopOf="@+id/buildingFrame" />
+
         <TextView
             android:id="@+id/buildingName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="104dp"
             android:layout_marginTop="16dp"
             android:text="Name"
-            app:layout_constraintStart_toEndOf="@+id/buildingFrame"
+            android:textColor="#000000"
+
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/buildingDesc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="36dp"
+            android:layout_width="202dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="104dp"
+            android:layout_marginTop="56dp"
             android:text="Description"
-            app:layout_constraintStart_toEndOf="@+id/buildingFrame"
-            app:layout_constraintTop_toBottomOf="@+id/buildingName" />
+            android:textColor="#000000"
+
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/buildingAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="92dp"
             android:layout_marginTop="16dp"
+            android:layout_marginEnd="152dp"
             android:text="Amount"
-            app:layout_constraintStart_toEndOf="@+id/buildingName"
+            android:textColor="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/buildingCps"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="60dp"
-            android:layout_marginTop="36dp"
+            android:layout_width="57dp"
+            android:layout_height="18dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="24dp"
             android:text="CPS"
-            app:layout_constraintStart_toEndOf="@+id/buildingDesc"
-            app:layout_constraintTop_toBottomOf="@+id/buildingAmount" />
+            android:textAlignment="viewStart"
 
+            android:textColor="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.example.appdevprojectradlerprueller.NonInterpolatingBtn
             android:id="@+id/imageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_width="57dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="24dp"
             android:background="@drawable/button_bg"
             android:text="Cost"
+            android:textAlignment="center"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.488" />
-
-        <ImageView
-            android:id="@+id/buildingIcon"
-            android:layout_width="77dp"
-            android:layout_height="77dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:src="@drawable/ic_launcher_foreground"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintVertical_bias="0.714" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

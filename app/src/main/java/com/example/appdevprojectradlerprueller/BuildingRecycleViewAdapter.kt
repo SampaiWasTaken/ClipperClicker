@@ -9,6 +9,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.runBlocking
+import java.math.BigInteger
 
 class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList<Building>, buyBtnListener:BuildingFragment.BuyBtnListener):
     RecyclerView.Adapter<BuildingRecycleViewAdapter.BuildingViewHolder>() {
@@ -33,14 +35,16 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
         holder.image.drawable.isFilterBitmap = false
         holder.name.text = buildings[position].name
         holder.desc.text = buildings[position].desc
-        holder.cost.text = buildings[position].cost.toString()
+        holder.cost.text = getPrefixCost(buildings[position].cost)
         holder.cps.text = buildings[position].cps.toString()
         holder.amount.text = buildings[position].amount.toString()
         holder.building = buildings[position]
-
+        holder.frame.drawable.isFilterBitmap = false
+        holder.image.drawable.isFilterBitmap = false
     }
 
     class BuildingViewHolder(view: View, buyBtnListener:BuildingFragment.BuyBtnListener): RecyclerView.ViewHolder(view) {
+        var frame: ImageView
         var image: ImageView
         var name: TextView
         var desc: TextView
@@ -48,10 +52,12 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
         var cps: TextView
         var amount: TextView
         var imageButton: AppCompatButton
+
         //correct Building will be set in onBindViewHolder()
         lateinit var building: Building
 
         init {
+            frame = view.findViewById(R.id.buildingFrame)
             image = view.findViewById(R.id.buildingIcon)
             name = view.findViewById(R.id.buildingName)
             desc = view.findViewById(R.id.buildingDesc)
@@ -61,8 +67,33 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
             imageButton = view.findViewById(R.id.imageButton)
             imageButton.setOnClickListener {
                 Log.e("buyButton", "logged inside of fragment, $building")
-                buyBtnListener.buyBtnPressed(building)
+                Log.e("WTF", clips.toString())
+                if (buildings[position].cost.toBigInteger() > clips)
+                {
+                    Log.e("Error", "Not enough Clips")
+                }
+                else
+                {
+                    building.amount++
+                    buildingCps = buildingCps.add(building.cps.toBigInteger())
+                    clips = clips.subtract(building.cost.toBigInteger())
+                }
+                runBlocking { buyBtnListener.buyBtnPressed(building) }
             }
         }
+    }
+
+    fun getPrefixCost(cost: String): String
+    {
+        //TODO fix commas
+        var _cost = cost.toBigInteger()
+        when(_cost)
+        {
+            in 1.toBigInteger()..1000.toBigInteger() -> return cost
+            in 1001.toBigInteger()..999999.toBigInteger() -> return "${(_cost.divide(1000.toBigInteger()))}K"
+            in 1000000.toBigInteger()..999999999.toBigInteger() -> return "${(_cost/1000000.toBigInteger())}M"
+            in 1000000000.toBigInteger()..999999999999.toBigInteger() -> return "${(_cost/1000000000.toBigInteger())}B"
+        }
+        return ""
     }
 }
