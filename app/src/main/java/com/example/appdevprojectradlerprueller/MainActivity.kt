@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
                 val y = event.y.toInt()  // get y-Coordinate
                 Log.e("WTF", "testing $x , $y")
             }
-            true
+            false
         }
 
         }
