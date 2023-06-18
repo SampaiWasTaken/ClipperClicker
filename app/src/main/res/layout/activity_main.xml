@@ -83,5 +83,17 @@
             android:layout_height="match_parent" />
     </FrameLayout>
 
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="399dp"
+        android:layout_height="259dp"
+        android:layout_marginTop="13dp"
+        android:layout_marginBottom="7dp"
+        app:layout_constraintBottom_toTopOf="@+id/cpsAmount"
+        app:layout_constraintTop_toBottomOf="@+id/amountClips"
+        tools:layout_editor_absoluteX="0dp">
+
+    </RelativeLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

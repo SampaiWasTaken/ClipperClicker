@@ -2,22 +2,25 @@ package com.example.appdevprojectradlerprueller
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.example.appdevprojectradlerprueller.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import java.math.BigInteger
+import java.util.*
+
 
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
@@ -45,7 +48,7 @@ private val incBuildingCps = object : Runnable {
 
 class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     private lateinit var binding: ActivityMainBinding
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "buildings")
@@ -74,16 +77,38 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
         idleAnimation.start()
 
         //set ontouch listener on clipper picture for later use
-        binding.clipImg.setOnTouchListener { view, event ->
+        binding.relativeLayout.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 val x = event.x.toInt()  // get x-Coordinate
                 val y = event.y.toInt()  // get y-Coordinate
                 Log.e("WTF", "testing $x , $y")
+                val lp = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT)
+                val iv = ImageView(applicationContext)
+                lp.setMargins(x, y, 0, 0) // set margins
+                iv.layoutParams = lp
+                iv.scaleX = 3f
+                iv.scaleY = 3f
+                //iv.setImageDrawable(resources.getDrawable(R.drawable.animated_click)) // set the image from drawable
+                lateinit var clickAnimation: AnimationDrawable
+                iv.apply { setBackgroundResource(R.drawable.animated_click)
+                    clickAnimation = background as AnimationDrawable}
+                clickAnimation.start()
+                (view as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
+
+                Handler().postDelayed({
+                    view.post { // it works without the runOnUiThread, but all UI updates must
+                        // be done on the UI thread
+                        view.removeView(iv)
+                    }
+                },250)
+
             }
             false
         }
 
         }
+
 
     suspend fun dbAccess() {
 
