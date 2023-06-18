@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list android:oneshot="false" xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:duration="50" android:drawable="@drawable/clickeffect_15x15_f1" />
+    <item android:duration="50" android:drawable="@drawable/clickeffect_15x15_f2" />
+    <item android:duration="50" android:drawable="@drawable/clickeffect_15x15_f3" />
+    <item android:duration="50" android:drawable="@drawable/clickeffect_15x15_f4" />
+    <item android:duration="50" android:drawable="@drawable/clickeffect_15x15_f5" />
+</animation-list>

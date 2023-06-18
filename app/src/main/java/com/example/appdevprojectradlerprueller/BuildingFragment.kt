@@ -55,6 +55,8 @@ class BuildingFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_building, container, false)
         view.findViewById<ImageView>(R.id.buildingFrame).drawable.isFilterBitmap = false
+        view.findViewById<ImageView>(R.id.buildingIcon).drawable.isFilterBitmap = false
+        //view.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.imageButton).drawable.isFilterBitmap = false
         return view
 
     }

@@ -30,6 +30,7 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
 
     override fun onBindViewHolder(holder: BuildingViewHolder, position: Int) {
         holder.image.setImageResource(buildings[position].image)
+        holder.image.drawable.isFilterBitmap = false
         holder.name.text = buildings[position].name
         holder.desc.text = buildings[position].desc
         holder.cost.text = buildings[position].cost.toString()

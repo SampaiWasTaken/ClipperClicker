@@ -1,19 +1,23 @@
 package com.example.appdevprojectradlerprueller
 
+import android.annotation.SuppressLint
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
 import com.example.appdevprojectradlerprueller.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import java.math.BigInteger
+
 
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
@@ -39,6 +43,7 @@ private val incBuildingCps = object : Runnable {
 
 class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     private lateinit var binding: ActivityMainBinding
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         runBlocking { dbAccess() }
@@ -56,13 +61,30 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
 
         cpsTxt.text = "$buildingCps"
         clips.inc()
-    }
+
+
+        // idle animation of big paperclip
+        val idleScreenShakeAnimator = IdleScreenShakeAnimator()
+        val idleAnimation = idleScreenShakeAnimator.getScreenShakeAnimatorSet(20f,binding.clipImg)
+        idleAnimation.start()
+
+        //set ontouch listener on clipper picture for later use
+        binding.clipImg.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val x = event.x.toInt()  // get x-Coordinate
+                val y = event.y.toInt()  // get y-Coordinate
+                Log.e("WTF", "testing $x , $y")
+            }
+            true
+        }
+
+        }
 
     suspend fun dbAccess() {
         val db =
             Room.databaseBuilder(applicationContext, AppDatabase::class.java, "buildings").build()
         val dao = db.buildingDao()
-
+        //dao.nukeTable()
         if (dao.getAll().isEmpty()) {
             dao.insertAll(
                 buildingEntity(1, R.drawable.frame, "Leon", "Mega Nice", 1, 1, 0),
@@ -82,8 +104,9 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     fun clipperClicked(view: View) {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
-        //Log.d("clips", clips.toString())
     }
+
+
 
     override fun onResume() {
         super.onResume()
