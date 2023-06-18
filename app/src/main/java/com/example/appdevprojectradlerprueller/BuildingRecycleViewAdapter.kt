@@ -1,6 +1,7 @@
 package com.example.appdevprojectradlerprueller
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,17 +9,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList<Building>):
+class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList<Building>, buyBtnListener:BuildingFragment.BuyBtnListener):
     RecyclerView.Adapter<BuildingRecycleViewAdapter.BuildingViewHolder>() {
+    private var myBuyBtnListener: BuildingFragment.BuyBtnListener
     init {
         var context = context
         var buildings = buildings
+        myBuyBtnListener = buyBtnListener
     }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BuildingViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int ): BuildingViewHolder {
         val inflater: LayoutInflater = LayoutInflater.from(context)
         val view: View = inflater.inflate(R.layout.fragment_building, parent, false)
-        return BuildingViewHolder(view)
+        return BuildingViewHolder(view, myBuyBtnListener)
     }
 
     override fun getItemCount(): Int {
@@ -32,16 +34,20 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
         holder.cost.text = buildings[position].cost.toString()
         holder.cps.text = buildings[position].cps.toString()
         holder.amount.text = buildings[position].amount.toString()
+        holder.building = buildings[position]
 
     }
 
-    class BuildingViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    class BuildingViewHolder(view: View, buyBtnListener:BuildingFragment.BuyBtnListener): RecyclerView.ViewHolder(view) {
         var image: ImageView
         var name: TextView
         var desc: TextView
         var cost: TextView
         var cps: TextView
         var amount: TextView
+        var imageButton: ImageView
+        //correct Building will be set in onBindViewHolder()
+        lateinit var building: Building
 
         init {
             image = view.findViewById(R.id.buildingIcon)
@@ -50,6 +56,11 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
             cost = view.findViewById(R.id.buildingCost)
             cps = view.findViewById(R.id.buildingCps)
             amount = view.findViewById(R.id.buildingAmount)
+            imageButton = view.findViewById(R.id.imageViewBuyButton)
+            imageButton.setOnClickListener {
+                Log.e("buyButton", "logged inside of fragment, $building")
+                buyBtnListener.buyBtnPressed(building)
+            }
         }
     }
 }

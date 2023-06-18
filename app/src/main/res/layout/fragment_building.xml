@@ -84,7 +84,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/imageView3"
+            android:id="@+id/imageViewBuyButton"
             android:layout_width="54dp"
             android:layout_height="26dp"
             android:layout_marginStart="208dp"
