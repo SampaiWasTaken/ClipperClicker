@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -36,7 +37,7 @@ private val incBuildingCps = object : Runnable {
     }
 }
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         clipImg = binding.clipImg
         cpsTxt = binding.cpsAmount
         val recyler = binding.recycleView
-        val buildingRecyclerAdapter = BuildingRecycleViewAdapter(this, buildings)
+        val buildingRecyclerAdapter = BuildingRecycleViewAdapter(this, buildings, this)
         recyler.adapter = buildingRecyclerAdapter
         recyler.layoutManager = LinearLayoutManager(this)
         handler = Handler(Looper.getMainLooper())
@@ -115,5 +116,9 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
         handler.removeCallbacks(incBuildingCps)
+    }
+
+    override fun buyBtnPressed(building: Building) {
+        Log.d("buyButton", "printed pressed Upgrade Building in MAIN: $building")
     }
 }
