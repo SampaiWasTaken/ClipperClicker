@@ -3,6 +3,7 @@ package com.example.appdevprojectradlerprueller
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.TypeConverter
 
 @Dao
 interface buildingDAO {

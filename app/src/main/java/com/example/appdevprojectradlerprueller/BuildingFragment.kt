@@ -8,6 +8,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.activity.viewModels
+import androidx.appcompat.widget.AppCompatButton
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import java.math.BigInteger
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -26,13 +31,14 @@ class BuildingFragment : Fragment() {
     private var buyBtnListener: BuyBtnListener? = null
     interface BuyBtnListener
     {
-        fun buyBtnPressed(building: Building)
+        suspend fun buyBtnPressed(building: Building)
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try {
             buyBtnListener = context as BuyBtnListener
+
             Log.e("Fragments","shit Attached")
         } catch (e: ClassCastException) {
             Log.e("Fragments","${context.toString()} must implement BuyBtnListener u fucking retard")
@@ -45,7 +51,6 @@ class BuildingFragment : Fragment() {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
-        //view?.findViewById<ImageView>(R.id.buildingFrame)!!.drawable.isFilterBitmap = false
     }
 
     override fun onCreateView(
@@ -55,6 +60,8 @@ class BuildingFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_building, container, false)
         view.findViewById<ImageView>(R.id.buildingFrame).drawable.isFilterBitmap = false
+        view.findViewById<ImageView>(R.id.buildingIcon).drawable.isFilterBitmap = false
+        view.findViewById<AppCompatButton>(R.id.imageButton).background.isFilterBitmap = false
         return view
 
     }
@@ -79,4 +86,9 @@ class BuildingFragment : Fragment() {
             }
     }
 
+
+    fun getClips(): BigInteger
+    {
+        return clips
+    }
 }
