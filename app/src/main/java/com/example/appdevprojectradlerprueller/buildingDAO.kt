@@ -3,7 +3,6 @@ package com.example.appdevprojectradlerprueller
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
 
 @Dao
 interface buildingDAO {
@@ -16,6 +15,6 @@ interface buildingDAO {
     @Query("UPDATE buildings SET buildingAmount = :amount, buildingCost = :cost WHERE buildingID = :id")
     suspend fun updateById(amount: Int, cost: Int, id: Int)
 
-    @Query("SELECT (SELECT COUNT(*) FROM buildings) == 0")
-    fun isEmpty(): Boolean
+    @Query("DELETE FROM buildings")
+    suspend fun nukeTable()
 }

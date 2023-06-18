@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatButton
 import androidx.recyclerview.widget.RecyclerView
 
 class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList<Building>, buyBtnListener:BuildingFragment.BuyBtnListener):
@@ -42,10 +43,10 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
         var image: ImageView
         var name: TextView
         var desc: TextView
-        var cost: TextView
+        var cost: AppCompatButton
         var cps: TextView
         var amount: TextView
-        var imageButton: ImageView
+        var imageButton: AppCompatButton
         //correct Building will be set in onBindViewHolder()
         lateinit var building: Building
 
@@ -53,10 +54,10 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
             image = view.findViewById(R.id.buildingIcon)
             name = view.findViewById(R.id.buildingName)
             desc = view.findViewById(R.id.buildingDesc)
-            cost = view.findViewById(R.id.buildingCost)
+            cost = view.findViewById(R.id.imageButton)
             cps = view.findViewById(R.id.buildingCps)
             amount = view.findViewById(R.id.buildingAmount)
-            imageButton = view.findViewById(R.id.imageViewBuyButton)
+            imageButton = view.findViewById(R.id.imageButton)
             imageButton.setOnClickListener {
                 Log.e("buyButton", "logged inside of fragment, $building")
                 buyBtnListener.buyBtnPressed(building)
