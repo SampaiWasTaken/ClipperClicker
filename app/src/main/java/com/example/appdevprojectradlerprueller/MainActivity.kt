@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
         runBlocking { updateFrags() }
         cpsTxt.text = "$buildingCps"
         clips.inc()
-
+        clipImg.drawable.isFilterBitmap = false
 
         // idle animation of big paperclip
         val idleScreenShakeAnimator = IdleScreenShakeAnimator()
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     suspend fun dbAccess() {
 
         val dao = db.buildingDao()
-        //dao.nukeTable()
+//        dao.nukeTable()
         if (dao.getAll().isEmpty()) {
             dao.insertAll(
                 buildingEntity(1, R.drawable.clip_factory_worker, "Factory Worker", "A minimum wage worker to produce paperclips for you", "150", 1, 0),
