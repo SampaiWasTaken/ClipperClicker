@@ -77,8 +77,8 @@ class BuildingRecycleViewAdapter (var context: Context, var buildings: ArrayList
                     building.amount++
                     buildingCps = buildingCps.add(building.cps.toBigInteger())
                     clips = clips.subtract(building.cost.toBigInteger())
+                    runBlocking { buyBtnListener.buyBtnPressed(building) }
                 }
-                runBlocking { buyBtnListener.buyBtnPressed(building) }
             }
         }
     }
