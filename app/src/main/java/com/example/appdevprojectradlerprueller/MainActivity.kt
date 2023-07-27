@@ -3,9 +3,12 @@ package com.example.appdevprojectradlerprueller
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.Handler
-
 import android.os.Looper
 import android.util.Log
 import android.view.GestureDetector
@@ -14,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GestureDetectorCompat
@@ -29,8 +33,7 @@ import kotlin.math.sqrt
 
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
-var clickValue: BigInteger = BigInteger.valueOf(1000L)
-    //BigInteger.ONE
+var clickValue: BigInteger = BigInteger.ONE
 private var firstFrag = BuildingFragment()
 lateinit var handler: Handler
 lateinit var buildingRecyclerAdapter: BuildingRecycleViewAdapter
@@ -38,8 +41,16 @@ lateinit var clipsTxt: TextView
 lateinit var clipImg: ImageView
 lateinit var cpsTxt: TextView
 lateinit var db: AppDatabase
+private var sensorManager: SensorManager? = null
+private var totalSteps = 0f
+private var previousTotalSteps = 0f
+private var currentSteps = 0f
+private var running = false
+
+
 
 var buildings = ArrayList<Building>()
+
 
 private val incBuildingCps = object : Runnable {
     override fun run() {
@@ -50,7 +61,7 @@ private val incBuildingCps = object : Runnable {
     }
 }
 
-class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
+class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, SensorEventListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var gestureDetector: GestureDetector
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables")
@@ -75,7 +86,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
         cpsTxt.text = "$buildingCps"
         clips.inc()
         clipImg.drawable.isFilterBitmap = false
-
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // idle animation of big paperclip
         val idleScreenShakeAnimator = IdleScreenShakeAnimator()
         val idleAnimation = idleScreenShakeAnimator.getScreenShakeAnimatorSet(20f,binding.clipImg)
@@ -174,7 +185,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
     suspend fun dbAccess() {
 
         val dao = db.buildingDao()
-      //  dao.nukeTable()
+//        dao.nukeTable()
         if (dao.getAll().isEmpty()) {
             dao.insertAll(
                 buildingEntity(1, R.drawable.clip_factory_worker, "Factory Worker", "A minimum wage worker to produce paperclips for you", "150", 1, 0),
@@ -193,7 +204,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
         }
     }
 
-    fun clipperClicked() {
+    fun clipperClicked(view: View) {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
         //Log.d("clips", clips.toString())
@@ -232,20 +243,44 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
     override fun onResume() {
         super.onResume()
 
+        val stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        if (stepSensor == null) {
+            Toast.makeText(this, "No step sensor detected on this device", Toast.LENGTH_SHORT).show()
+        } else {
+            sensorManager?.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI)
+        }
+
         val sharedPref = this.getPreferences(Context.MODE_PRIVATE) ?: return
         val clipString = sharedPref.getString(getString(R.string.clips), "0")
         val cpsString = sharedPref.getString(getString(R.string.cps), "1")
+        previousTotalSteps = sharedPref.getFloat("2", 0f)
+
+        Toast.makeText(this, "You have taken ${currentSteps} since your last visit, gaining you ${currentSteps} clips!", Toast.LENGTH_LONG).show()
+
         if (cpsString != null) {
             buildingCps = cpsString.toBigInteger()
         }
         if (clipString != null) {
             clips = clipString.toBigInteger()
         }
+        clips.add(currentSteps.toString().toBigInteger())
         handler.post(incBuildingCps)
         clipsTxt.text = clips.toString()
         cpsTxt.text = buildingCps.toString()
         runBlocking { updateFrags() }
     }
+
+    override fun onSensorChanged(p0: SensorEvent?) {
+        if (running) {
+            totalSteps = p0!!.values[0]
+            currentSteps = totalSteps - previousTotalSteps
+        }
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+        return
+    }
+
 
     override fun onPause() {
         super.onPause()
@@ -254,6 +289,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
         with(sharedPref.edit()) {
             putString(getString(R.string.clips), clips.toString())
             putString(getString(R.string.cps), buildingCps.toString())
+            putFloat("2", previousTotalSteps)
             apply()
         }
         handler.removeCallbacks(incBuildingCps)
@@ -266,6 +302,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
         with(sharedPref.edit()) {
             putString(getString(R.string.clips), clips.toString())
             putString(getString(R.string.cps), buildingCps.toString())
+            putFloat("2", previousTotalSteps)
             apply()
         }
         handler.removeCallbacks(incBuildingCps)
@@ -295,5 +332,4 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
         recyler.adapter = buildingRecyclerAdapter
         buildingRecyclerAdapter.notifyDataSetChanged()
     }
-
 }
