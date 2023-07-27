@@ -33,7 +33,7 @@ import kotlin.math.sqrt
 
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
-var clickValue: BigInteger = BigInteger.ONE
+var clickValue: BigInteger = 1000.toBigInteger()
 private var firstFrag = BuildingFragment()
 lateinit var handler: Handler
 lateinit var buildingRecyclerAdapter: BuildingRecycleViewAdapter
@@ -204,7 +204,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         }
     }
 
-    fun clipperClicked(view: View) {
+    fun clipperClicked() {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
         //Log.d("clips", clips.toString())
@@ -246,6 +246,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         val stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         if (stepSensor == null) {
             Toast.makeText(this, "No step sensor detected on this device", Toast.LENGTH_SHORT).show()
+
         } else {
             sensorManager?.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI)
         }
@@ -263,7 +264,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         if (clipString != null) {
             clips = clipString.toBigInteger()
         }
-        clips.add(currentSteps.toString().toBigInteger())
+        clips.add(currentSteps.toInt().toString().toBigInteger())
         handler.post(incBuildingCps)
         clipsTxt.text = clips.toString()
         cpsTxt.text = buildingCps.toString()
