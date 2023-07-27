@@ -31,9 +31,10 @@ import kotlin.math.atan
 import kotlin.math.sqrt
 
 
+// Global variables
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
-var clickValue: BigInteger = 1000.toBigInteger()
+var clickValue: BigInteger = BigInteger.ONE
 private var firstFrag = BuildingFragment()
 lateinit var handler: Handler
 lateinit var buildingRecyclerAdapter: BuildingRecycleViewAdapter
@@ -47,61 +48,79 @@ private var previousTotalSteps = 0f
 private var currentSteps = 0f
 private var running = false
 
-
-
+// List of buildings
 var buildings = ArrayList<Building>()
 
-
+// Runnable object to increment buildingCps and update clipsTxt
 private val incBuildingCps = object : Runnable {
     override fun run() {
         clips = clips.add(buildingCps)
         handler.postDelayed(this, 1000)
         clipsTxt.text = "$clips"
-        //Log.d("clips", clips.toString())
     }
 }
 
+/**
+ * MainActivity class: The main activity of the app that manages the game mechanics and UI interactions.
+ */
 class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, SensorEventListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var gestureDetector: GestureDetector
+
+    /**
+     * onCreate function: Called when the activity is created. Initializes the UI and sets up the game.
+     * @param savedInstanceState: The previously saved instance state, if available.
+     */
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Set up the Room database for buildings
         db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "buildings")
-                .fallbackToDestructiveMigration()
-                .build()
+            .fallbackToDestructiveMigration()
+            .build()
+
+        // Load building data from the database
         runBlocking { dbAccess() }
+
+        // Set the layout using ViewBinding
         setContentView(R.layout.activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initialize UI elements and building recycler view
         clipsTxt = binding.amountClips
         clipImg = binding.clipImg
         cpsTxt = binding.cpsAmount
-        val recyler = binding.recycleView
+        val recycler = binding.recycleView
         buildingRecyclerAdapter = BuildingRecycleViewAdapter(this, buildings, this)
-        recyler.adapter = buildingRecyclerAdapter
-        recyler.layoutManager = LinearLayoutManager(this)
+        recycler.adapter = buildingRecyclerAdapter
+        recycler.layoutManager = LinearLayoutManager(this)
+
+        // Initialize handler and start incrementing buildingCps
         handler = Handler(Looper.getMainLooper())
         runBlocking { updateFrags() }
         cpsTxt.text = "$buildingCps"
         clips.inc()
         clipImg.drawable.isFilterBitmap = false
+
+        // Set up the sensor manager to detect steps
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        // idle animation of big paperclip
+
+        // Create the idle animation for the big paperclip
         val idleScreenShakeAnimator = IdleScreenShakeAnimator()
-        val idleAnimation = idleScreenShakeAnimator.getScreenShakeAnimatorSet(20f,binding.clipImg)
+        val idleAnimation = idleScreenShakeAnimator.getScreenShakeAnimatorSet(20f, binding.clipImg)
         idleAnimation.start()
 
-        //create our GestureDetector
+        // Create GestureDetector to handle touch gestures on the paperclip
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean {
-                //need to return true here
-                //else gestures will not work, i dont know why
+                // Return true to enable gestures to work properly
                 return true
             }
 
             override fun onSingleTapUp(event: MotionEvent): Boolean {
-                Log.e("WTF", "single")
+                // Handle single tap on the paperclip
                 clipperClicked()
                 clipperClickedAnimation(event)
                 return true
@@ -113,151 +132,184 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
+                // Handle fling gesture on the paperclip
 
+                // Increment clips based on clickValue
                 clips = clips.add(clickValue)
                 clipsTxt.text = "$clips"
 
-                //calc vector
+                // Calculate the vector of the fling gesture
                 val vx = e2.x - e1.x
                 val vy = e2.y - e1.y
-
-                val vectorAngleRadiant = atan(vy/vx)
+                val vectorAngleRadiant = atan(vy / vx)
                 var vectorAngleDegree = 0.0
 
-                if(vy <= 0){
-                    if(vx <= 0){
-                        //third quadrant
-                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180)
-                    }else{
-                        //fourth quadrant
-                        vectorAngleDegree =  vectorAngleRadiant/(Math.PI/180) - 180
+                // Calculate the angle in degrees based on the quadrant of the vector
+                if (vy <= 0) {
+                    if (vx <= 0) {
+                        // Third quadrant
+                        vectorAngleDegree = vectorAngleRadiant / (Math.PI / 180)
+                    } else {
+                        // Fourth quadrant
+                        vectorAngleDegree = vectorAngleRadiant / (Math.PI / 180) - 180
                     }
-                }else{
-                    if(vx >= 0){
-                        //second quadrant
-                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180) - 180
-                    }else{
-                        //first quadrant
-                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180)
+                } else {
+                    if (vx >= 0) {
+                        // Second quadrant
+                        vectorAngleDegree = vectorAngleRadiant / (Math.PI / 180) - 180
+                    } else {
+                        // First quadrant
+                        vectorAngleDegree = vectorAngleRadiant / (Math.PI / 180)
                     }
                 }
 
+                // Calculate the midpoint of the fling
+                val x = (e1.x.toInt() + vx / 2).toInt()
+                val y = (e1.y.toInt() + vy / 2).toInt()
 
-                val x = (e1.x.toInt() + vx/2).toInt()
-                val y = (e1.y.toInt() + vy/2).toInt()
-
-                val lp = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                    ConstraintLayout.LayoutParams.WRAP_CONTENT)
+                // Create and display the fling animation image view
+                val lp = ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT
+                )
                 val iv = ImageView(applicationContext)
-                lp.setMargins(x, y, 0, 0) // set margins
+                lp.setMargins(x, y, 0, 0)
                 iv.layoutParams = lp
                 iv.rotation = vectorAngleDegree.toFloat()
                 iv.scaleX = 3f
                 iv.scaleY = 3f
-                //iv.setImageDrawable(resources.getDrawable(R.drawable.animated_click)) // set the image from drawable
                 lateinit var clickAnimation: AnimationDrawable
-                iv.apply { setBackgroundResource(R.drawable.animated_sling)
-                    clickAnimation = background as AnimationDrawable}
+                iv.apply {
+                    setBackgroundResource(R.drawable.animated_sling)
+                    clickAnimation = background as AnimationDrawable
+                }
                 clickAnimation.start()
-                (binding.relativeLayout as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
+                (binding.relativeLayout as ViewGroup).addView(iv)
 
+                // Remove the fling animation image view after a short delay
                 Handler().postDelayed({
-                    binding.relativeLayout.post { // it works without the runOnUiThread, but all UI updates must
-                        // be done on the UI thread
+                    binding.relativeLayout.post {
                         binding.relativeLayout.removeView(iv)
                     }
-                },250)
-
-
+                }, 250)
 
                 return super.onFling(e1, e2, velocityX, velocityY)
             }
         })
         gestureDetector.setOnDoubleTapListener(null)
 
-        binding.relativeLayout.setOnTouchListener{ view, event ->
+        // Set the gesture detector on the main layout to capture touch events
+        binding.relativeLayout.setOnTouchListener { view, event ->
             return@setOnTouchListener gestureDetector.onTouchEvent(event)
         }
+    }
 
-        }
-
-
+    /**
+     * dbAccess function: A suspend function to access the Room database and load building data.
+     * Uses coroutines to run the database access in a background thread.
+     */
     suspend fun dbAccess() {
-
         val dao = db.buildingDao()
-//        dao.nukeTable()
+
+        // Insert default building data if the database is empty
         if (dao.getAll().isEmpty()) {
             dao.insertAll(
-                buildingEntity(1, R.drawable.clip_factory_worker, "Factory Worker", "A minimum wage worker to produce paperclips for you", "150", 1, 0),
-                buildingEntity(2, R.drawable.clip_factory, "Paperclip Factory", "A factory that produces paperclips", "1000", 10, 0),
-                buildingEntity(3, R.drawable.clip_tree, "Paperclip Plantation", "Grow more paperclips from planting some, it's renewable!", "11000", 80, 0),
-                buildingEntity(4, R.drawable.clip_clippy, "Clippy", "This is not a copyright infringement", "120000", 470, 0),
-                buildingEntity(5, R.drawable.clip_blood, "Blood Altar", "Produce paperclips with dark magic", "1300000", 2600, 0),
-                buildingEntity(6, R.drawable.clip_alien, "Steve","His name is Steve, he sells paperclips from another world", "14000000", 14000, 0),
-                buildingEntity(7, R.drawable.clip_god, "God", "Pray for paperclips", "200000000", 78000, 0)
+                buildingEntity(1, R.drawable.clip_factory_worker, "Factory Worker",
+                    "A minimum wage worker to produce paperclips for you", "150", 1, 0),
+                buildingEntity(2, R.drawable.clip_factory, "Paperclip Factory",
+                    "A factory that produces paperclips", "1000", 10, 0),
+                buildingEntity(3, R.drawable.clip_tree, "Paperclip Plantation",
+                    "Grow more paperclips from planting some, it's renewable!", "11000", 80, 0),
+                buildingEntity(4, R.drawable.clip_clippy, "Clippy",
+                    "This is not a copyright infringement", "120000", 470, 0),
+                buildingEntity(5, R.drawable.clip_blood, "Blood Altar",
+                    "Produce paperclips with dark magic", "1300000", 2600, 0),
+                buildingEntity(6, R.drawable.clip_alien, "Steve",
+                    "His name is Steve, he sells paperclips from another world", "14000000", 14000, 0),
+                buildingEntity(7, R.drawable.clip_god, "God", "Pray for paperclips",
+                    "200000000", 78000, 0)
             )
         }
-//        dao.updateById(9, 1234, 5)
+
+        // Load building data from the database into the buildings list
         val bents = dao.getAll()
         for (b in bents) {
             buildings.add(Building(b.buildingID, b.img, b.name, b.desc, b.cost, b.cps, b.amount))
         }
     }
 
+    /**
+     * clipperClicked function: Called when the paperclip image is clicked.
+     * Increments the number of clips and updates the clipsTxt.
+     */
     fun clipperClicked() {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
-        //Log.d("clips", clips.toString())
     }
 
+    /**
+     * clipperClickedAnimation function: Animates the click effect on the paperclip image.
+     * @param event: The touch event containing the click coordinates.
+     */
     fun clipperClickedAnimation(event: MotionEvent) {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
 
-        val x = event.x.toInt()  // get x-Coordinate
-        val y = event.y.toInt()  // get y-Coordinate
-        Log.e("WTF", "testing $x , $y")
-        val lp = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
-            ConstraintLayout.LayoutParams.WRAP_CONTENT)
+        // Get the click coordinates
+        val x = event.x.toInt()
+        val y = event.y.toInt()
+
+        // Create and display the click animation image view
+        val lp = ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT
+        )
         val iv = ImageView(applicationContext)
-        lp.setMargins(x, y, 0, 0) // set margins
+        lp.setMargins(x, y, 0, 0)
         iv.layoutParams = lp
         iv.scaleX = 3f
         iv.scaleY = 3f
-        //iv.setImageDrawable(resources.getDrawable(R.drawable.animated_click)) // set the image from drawable
         lateinit var clickAnimation: AnimationDrawable
-        iv.apply { setBackgroundResource(R.drawable.animated_click)
-            clickAnimation = background as AnimationDrawable}
+        iv.apply {
+            setBackgroundResource(R.drawable.animated_click)
+            clickAnimation = background as AnimationDrawable
+        }
         clickAnimation.start()
-        (binding.relativeLayout as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
+        (binding.relativeLayout as ViewGroup).addView(iv)
 
+        // Remove the click animation image view after a short delay
         Handler().postDelayed({
-            binding.relativeLayout.post { // it works without the runOnUiThread, but all UI updates must
-                // be done on the UI thread
+            binding.relativeLayout.post {
                 binding.relativeLayout.removeView(iv)
             }
-        },250)
-
+        }, 250)
     }
 
+    /**
+     * onResume function: Called when the activity is resumed.
+     * Registers the step counter sensor and resumes the game mechanics.
+     */
     override fun onResume() {
         super.onResume()
 
+        // Register the step counter sensor
         val stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         if (stepSensor == null) {
             Toast.makeText(this, "No step sensor detected on this device", Toast.LENGTH_SHORT).show()
-
         } else {
             sensorManager?.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI)
         }
 
+        // Retrieve and update saved game data
         val sharedPref = this.getPreferences(Context.MODE_PRIVATE) ?: return
         val clipString = sharedPref.getString(getString(R.string.clips), "0")
         val cpsString = sharedPref.getString(getString(R.string.cps), "1")
         previousTotalSteps = sharedPref.getFloat("2", 0f)
 
-        Toast.makeText(this, "You have taken ${currentSteps} since your last visit, gaining you ${currentSteps} clips!", Toast.LENGTH_LONG).show()
+        // Show a toast message with the number of steps taken and clips earned
+        Toast.makeText(this, "You have taken ${currentSteps} steps since your last visit, gaining you ${currentSteps} clips!", Toast.LENGTH_LONG).show()
 
+        // Update global variables with saved data
         if (cpsString != null) {
             buildingCps = cpsString.toBigInteger()
         }
@@ -271,6 +323,11 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         runBlocking { updateFrags() }
     }
 
+    /**
+     * onSensorChanged function: Called when the sensor data changes (step counter sensor).
+     * Updates the totalSteps and currentSteps variables based on the sensor data.
+     * @param p0: The SensorEvent containing the sensor data.
+     */
     override fun onSensorChanged(p0: SensorEvent?) {
         if (running) {
             totalSteps = p0!!.values[0]
@@ -278,11 +335,19 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         }
     }
 
+    /**
+     * onAccuracyChanged function: Called when the accuracy of the sensor changes.
+     * @param p0: The Sensor reporting the accuracy change.
+     * @param p1: The new accuracy value.
+     */
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
         return
     }
 
-
+    /**
+     * onPause function: Called when the activity is paused.
+     * Saves the game data (clips, buildingCps, and previousTotalSteps) to SharedPreferences.
+     */
     override fun onPause() {
         super.onPause()
 
@@ -296,6 +361,10 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         handler.removeCallbacks(incBuildingCps)
     }
 
+    /**
+     * onDestroy function: Called when the activity is destroyed.
+     * Saves the game data (clips, buildingCps, and previousTotalSteps) to SharedPreferences.
+     */
     override fun onDestroy() {
         super.onDestroy()
 
@@ -309,28 +378,38 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener, Senso
         handler.removeCallbacks(incBuildingCps)
     }
 
+    /**
+     * buyBtnPressed function: Called when the "Buy" button in the building fragment is pressed.
+     * Updates the building data in the database and UI after purchasing a building.
+     * @param building: The Building object representing the building to be purchased.
+     */
     override suspend fun buyBtnPressed(building: Building) {
-        Log.d("buyButton", "printed pressed Upgrade Building in MAIN: $building")
-        val newCost: Int = (building.cost.toDouble()*(Math.pow(1.15, building.amount.toDouble()))).toInt()
+        // Update building data in the database
+        val newCost: Int = (building.cost.toDouble() * (Math.pow(1.15, building.amount.toDouble()))).toInt()
         db.buildingDao().updateById(building.amount, newCost, building.buildingID)
+
+        // Update UI with new buildingCps and clips
         cpsTxt.text = buildingCps.toString()
         clipsTxt.text = clips.toString()
         updateFrags()
-
     }
 
-    suspend fun updateFrags()
-    {
-
+    /**
+     * updateFrags function: A suspend function to update the list of buildings and the recycler view.
+     * Uses coroutines to run the database access in a background thread.
+     */
+    suspend fun updateFrags() {
+        // Load building data from the database and update the buildings list
         val bents = db.buildingDao().getAll()
         buildings.clear()
         for (b in bents) {
-            Log.e("building", "$b")
             buildings.add(Building(b.buildingID, b.img, b.name, b.desc, b.cost, b.cps, b.amount))
         }
-        val recyler = binding.recycleView
+
+        // Update the building recycler view adapter and notify data changes
+        val recycler = binding.recycleView
         buildingRecyclerAdapter = BuildingRecycleViewAdapter(this, buildings, this)
-        recyler.adapter = buildingRecyclerAdapter
+        recycler.adapter = buildingRecyclerAdapter
         buildingRecyclerAdapter.notifyDataSetChanged()
     }
 }
