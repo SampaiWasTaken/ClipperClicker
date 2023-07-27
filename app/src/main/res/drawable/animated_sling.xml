@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list android:oneshot="true" xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:duration="50" android:drawable="@drawable/slingeffect_44x32_f1" />
+    <item android:duration="50" android:drawable="@drawable/slingeffect_44x32_f2" />
+    <item android:duration="50" android:drawable="@drawable/slingeffect_44x32_f3" />
+    <item android:duration="50" android:drawable="@drawable/slingeffect_44x32_f4" />
+    <item android:duration="50" android:drawable="@drawable/slingeffect_44x32_f5" />
+</animation-list>

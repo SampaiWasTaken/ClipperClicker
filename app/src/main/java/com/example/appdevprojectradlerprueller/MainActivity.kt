@@ -5,8 +5,10 @@ import android.content.Context
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.os.Handler
+
 import android.os.Looper
 import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -14,17 +16,21 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GestureDetectorCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
 import com.example.appdevprojectradlerprueller.databinding.ActivityMainBinding
 import kotlinx.coroutines.runBlocking
 import java.math.BigInteger
 import java.util.*
+import kotlin.math.atan
+import kotlin.math.sqrt
 
 
 var clips: BigInteger = BigInteger.ZERO
 var buildingCps: BigInteger = BigInteger.ONE
-var clickValue: BigInteger = BigInteger.ONE
+var clickValue: BigInteger = BigInteger.valueOf(1000L)
+    //BigInteger.ONE
 private var firstFrag = BuildingFragment()
 lateinit var handler: Handler
 lateinit var buildingRecyclerAdapter: BuildingRecycleViewAdapter
@@ -33,9 +39,7 @@ lateinit var clipImg: ImageView
 lateinit var cpsTxt: TextView
 lateinit var db: AppDatabase
 
-
 var buildings = ArrayList<Building>()
-
 
 private val incBuildingCps = object : Runnable {
     override fun run() {
@@ -46,8 +50,9 @@ private val incBuildingCps = object : Runnable {
     }
 }
 
-class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
+class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener{
     private lateinit var binding: ActivityMainBinding
+    private lateinit var gestureDetector: GestureDetector
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,35 +81,91 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
         val idleAnimation = idleScreenShakeAnimator.getScreenShakeAnimatorSet(20f,binding.clipImg)
         idleAnimation.start()
 
-        //set ontouch listener on clipper picture for later use
-        binding.relativeLayout.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                val x = event.x.toInt()  // get x-Coordinate
-                val y = event.y.toInt()  // get y-Coordinate
-                Log.e("WTF", "testing $x , $y")
+        //create our GestureDetector
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean {
+                //need to return true here
+                //else gestures will not work, i dont know why
+                return true
+            }
+
+            override fun onSingleTapUp(event: MotionEvent): Boolean {
+                Log.e("WTF", "single")
+                clipperClicked()
+                clipperClickedAnimation(event)
+                return true
+            }
+
+            override fun onFling(
+                e1: MotionEvent,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+
+                clips = clips.add(clickValue)
+                clipsTxt.text = "$clips"
+
+                //calc vector
+                val vx = e2.x - e1.x
+                val vy = e2.y - e1.y
+
+                val vectorAngleRadiant = atan(vy/vx)
+                var vectorAngleDegree = 0.0
+
+                if(vy <= 0){
+                    if(vx <= 0){
+                        //third quadrant
+                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180)
+                    }else{
+                        //fourth quadrant
+                        vectorAngleDegree =  vectorAngleRadiant/(Math.PI/180) - 180
+                    }
+                }else{
+                    if(vx >= 0){
+                        //second quadrant
+                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180) - 180
+                    }else{
+                        //first quadrant
+                        vectorAngleDegree = vectorAngleRadiant/(Math.PI/180)
+                    }
+                }
+
+
+                val x = (e1.x.toInt() + vx/2).toInt()
+                val y = (e1.y.toInt() + vy/2).toInt()
+
                 val lp = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
                     ConstraintLayout.LayoutParams.WRAP_CONTENT)
                 val iv = ImageView(applicationContext)
                 lp.setMargins(x, y, 0, 0) // set margins
                 iv.layoutParams = lp
+                iv.rotation = vectorAngleDegree.toFloat()
                 iv.scaleX = 3f
                 iv.scaleY = 3f
                 //iv.setImageDrawable(resources.getDrawable(R.drawable.animated_click)) // set the image from drawable
                 lateinit var clickAnimation: AnimationDrawable
-                iv.apply { setBackgroundResource(R.drawable.animated_click)
+                iv.apply { setBackgroundResource(R.drawable.animated_sling)
                     clickAnimation = background as AnimationDrawable}
                 clickAnimation.start()
-                (view as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
+                (binding.relativeLayout as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
 
                 Handler().postDelayed({
-                    view.post { // it works without the runOnUiThread, but all UI updates must
+                    binding.relativeLayout.post { // it works without the runOnUiThread, but all UI updates must
                         // be done on the UI thread
-                        view.removeView(iv)
+                        binding.relativeLayout.removeView(iv)
                     }
                 },250)
 
+
+
+                return super.onFling(e1, e2, velocityX, velocityY)
             }
-            false
+        })
+        gestureDetector.setOnDoubleTapListener(null)
+
+        binding.relativeLayout.setOnTouchListener{ view, event ->
+            return@setOnTouchListener gestureDetector.onTouchEvent(event)
         }
 
         }
@@ -113,7 +174,7 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
     suspend fun dbAccess() {
 
         val dao = db.buildingDao()
-//        dao.nukeTable()
+      //  dao.nukeTable()
         if (dao.getAll().isEmpty()) {
             dao.insertAll(
                 buildingEntity(1, R.drawable.clip_factory_worker, "Factory Worker", "A minimum wage worker to produce paperclips for you", "150", 1, 0),
@@ -132,10 +193,40 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
         }
     }
 
-    fun clipperClicked(view: View) {
+    fun clipperClicked() {
         clips = clips.add(clickValue)
         clipsTxt.text = "$clips"
         //Log.d("clips", clips.toString())
+    }
+
+    fun clipperClickedAnimation(event: MotionEvent) {
+        clips = clips.add(clickValue)
+        clipsTxt.text = "$clips"
+
+        val x = event.x.toInt()  // get x-Coordinate
+        val y = event.y.toInt()  // get y-Coordinate
+        Log.e("WTF", "testing $x , $y")
+        val lp = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT)
+        val iv = ImageView(applicationContext)
+        lp.setMargins(x, y, 0, 0) // set margins
+        iv.layoutParams = lp
+        iv.scaleX = 3f
+        iv.scaleY = 3f
+        //iv.setImageDrawable(resources.getDrawable(R.drawable.animated_click)) // set the image from drawable
+        lateinit var clickAnimation: AnimationDrawable
+        iv.apply { setBackgroundResource(R.drawable.animated_click)
+            clickAnimation = background as AnimationDrawable}
+        clickAnimation.start()
+        (binding.relativeLayout as ViewGroup).addView(iv) // add a View programmatically to the ViewGroup
+
+        Handler().postDelayed({
+            binding.relativeLayout.post { // it works without the runOnUiThread, but all UI updates must
+                // be done on the UI thread
+                binding.relativeLayout.removeView(iv)
+            }
+        },250)
+
     }
 
     override fun onResume() {
@@ -204,4 +295,5 @@ class MainActivity : AppCompatActivity(), BuildingFragment.BuyBtnListener {
         recyler.adapter = buildingRecyclerAdapter
         buildingRecyclerAdapter.notifyDataSetChanged()
     }
+
 }

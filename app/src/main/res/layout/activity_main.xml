@@ -85,13 +85,16 @@
 
     <RelativeLayout
         android:id="@+id/relativeLayout"
-        android:layout_width="399dp"
+        android:layout_width="0dp"
         android:layout_height="259dp"
         android:layout_marginTop="13dp"
         android:layout_marginBottom="7dp"
         app:layout_constraintBottom_toTopOf="@+id/cpsAmount"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amountClips"
-        tools:layout_editor_absoluteX="0dp">
+        app:layout_constraintVertical_bias="1.0">
 
     </RelativeLayout>
 
